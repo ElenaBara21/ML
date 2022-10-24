@@ -1,0 +1,86 @@
+### 3.1 Predicting which customers are likely to leave
+0 negative is not going to leave and 1 is going to leave
+
+# this will help in making the Python code more structured automatically (good coding practice)
+%load_ext nb_black
+
+# import warnings
+
+# warnings.filterwarnings("ignore")
+
+# Libraries to help with reading and manipulating data
+
+import pandas as pd
+import numpy as np
+
+# Library to split data
+from sklearn.model_selection import train_test_split
+
+# libaries to help with data visualization
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Removes the limit for the number of displayed columns
+pd.set_option("display.max_columns", None)
+# Sets the limit for the number of displayed rows
+pd.set_option("display.max_rows", 200)
+
+
+# To build model for prediction
+import statsmodels.stats.api as sms
+from statsmodels.stats.outliers_influence import variance_inflation_factor
+import statsmodels.api as sm
+from statsmodels.tools.tools import add_constant
+from sklearn.linear_model import LogisticRegression
+
+# To get diferent metric scores
+from sklearn.metrics import (
+    f1_score,
+    accuracy_score,
+    recall_score,
+    precision_score,
+    confusion_matrix,
+    roc_auc_score,
+    plot_confusion_matrix,
+    precision_recall_curve,
+    roc_curve,
+)
+
+
+
+# Loading the dataset - sheet_name parameter is used if there are multiple tabs in the excel file.
+df = pd.read_csv("Telco_Customer_Churn.csv")
+
+* Make column namesand values look uniform
+* Check if all the columns read correctly
+* Check if the churn variable need any preparation
+
+df.head().T
+
+df.columns = df.columns.str.lower().str.replace(" ", "_")
+categorical_columns = list(df.dtypes[df.dtypes == "object"].index)
+
+for c in categorical_columns:
+    df[c] = df[c].str.lower().str.replace(" ", "_")
+
+df.head().T
+
+df.dtypes
+
+df.isnull()
+
+# df.totalcharges #non numeric, must be numeric
+tc = pd.to_numeric(
+    df.totalcharges, errors="coerce"  # coerce meance to ignore them
+)  # gives us a mistake at 488 line, that there is _sign
+
+df.totalcharges = pd.to_numeric(df.totalcharges, errors="coerce")
+
+df.totalcharges = df.totalcharges.fillna(0)
+
+df[tc.isnull()][["customerid", "totalcharges"]]
+
+df.churn = (df.churn == "yes").astype(int) #we changed yes no to 0no not going to leave and 1yes
+
+### 3.3 Setting up the validation framework
+* Perform the train/validation/test split with scikit learn
