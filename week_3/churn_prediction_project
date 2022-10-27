@@ -1,38 +1,54 @@
-### 3.1 Predicting which customers are likely to leave
+Jupyter Notebook
+3. Churn prediction project
+Last Checkpoint: a few seconds ago
+(autosaved)
+Current Kernel Logo
+Python 3 (ipykernel) 
+File
+Edit
+View
+Insert
+Cell
+Kernel
+Widgets
+Help
+
+Markdown
+3.1 Predicting which customers are likely to leave
 0 negative is not going to leave and 1 is going to leave
 
 # this will help in making the Python code more structured automatically (good coding practice)
 %load_ext nb_black
-
+​
 # import warnings
-
+​
 # warnings.filterwarnings("ignore")
-
+​
 # Libraries to help with reading and manipulating data
-
+​
 import pandas as pd
 import numpy as np
-
+​
 # Library to split data
 from sklearn.model_selection import train_test_split
-
+​
 # libaries to help with data visualization
 import matplotlib.pyplot as plt
 import seaborn as sns
-
+​
 # Removes the limit for the number of displayed columns
 pd.set_option("display.max_columns", None)
 # Sets the limit for the number of displayed rows
 pd.set_option("display.max_rows", 200)
-
-
+​
+​
 # To build model for prediction
 import statsmodels.stats.api as sms
 from statsmodels.stats.outliers_influence import variance_inflation_factor
 import statsmodels.api as sm
 from statsmodels.tools.tools import add_constant
 from sklearn.linear_model import LogisticRegression
-
+​
 # To get diferent metric scores
 from sklearn.metrics import (
     f1_score,
@@ -45,42 +61,512 @@ from sklearn.metrics import (
     precision_recall_curve,
     roc_curve,
 )
-
-
-
+The nb_black extension is already loaded. To reload it, use:
+  %reload_ext nb_black
+​
 # Loading the dataset - sheet_name parameter is used if there are multiple tabs in the excel file.
 df = pd.read_csv("Telco_Customer_Churn.csv")
-
-* Make column namesand values look uniform
-* Check if all the columns read correctly
-* Check if the churn variable need any preparation
-
+Make column namesand values look uniform
+Check if all the columns read correctly
+Check if the churn variable need any preparation
+f
 df.head().T
-
+0	1	2	3	4
+customerID	7590-VHVEG	5575-GNVDE	3668-QPYBK	7795-CFOCW	9237-HQITU
+gender	Female	Male	Male	Male	Female
+SeniorCitizen	0	0	0	0	0
+Partner	Yes	No	No	No	No
+Dependents	No	No	No	No	No
+tenure	1	34	2	45	2
+PhoneService	No	Yes	Yes	No	Yes
+MultipleLines	No phone service	No	No	No phone service	No
+InternetService	DSL	DSL	DSL	DSL	Fiber optic
+OnlineSecurity	No	Yes	Yes	Yes	No
+OnlineBackup	Yes	No	Yes	No	No
+DeviceProtection	No	Yes	No	Yes	No
+TechSupport	No	No	No	Yes	No
+StreamingTV	No	No	No	No	No
+StreamingMovies	No	No	No	No	No
+Contract	Month-to-month	One year	Month-to-month	One year	Month-to-month
+PaperlessBilling	Yes	No	Yes	No	Yes
+PaymentMethod	Electronic check	Mailed check	Mailed check	Bank transfer (automatic)	Electronic check
+MonthlyCharges	29.85	56.95	53.85	42.3	70.7
+TotalCharges	29.85	1889.5	108.15	1840.75	151.65
+Churn	No	No	Yes	No	Yes
+_
 df.columns = df.columns.str.lower().str.replace(" ", "_")
 categorical_columns = list(df.dtypes[df.dtypes == "object"].index)
-
+​
 for c in categorical_columns:
     df[c] = df[c].str.lower().str.replace(" ", "_")
-
+.T
 df.head().T
-
+0	1	2	3	4
+customerid	7590-vhveg	5575-gnvde	3668-qpybk	7795-cfocw	9237-hqitu
+gender	female	male	male	male	female
+seniorcitizen	0	0	0	0	0
+partner	yes	no	no	no	no
+dependents	no	no	no	no	no
+tenure	1	34	2	45	2
+phoneservice	no	yes	yes	no	yes
+multiplelines	no_phone_service	no	no	no_phone_service	no
+internetservice	dsl	dsl	dsl	dsl	fiber_optic
+onlinesecurity	no	yes	yes	yes	no
+onlinebackup	yes	no	yes	no	no
+deviceprotection	no	yes	no	yes	no
+techsupport	no	no	no	yes	no
+streamingtv	no	no	no	no	no
+streamingmovies	no	no	no	no	no
+contract	month-to-month	one_year	month-to-month	one_year	month-to-month
+paperlessbilling	yes	no	yes	no	yes
+paymentmethod	electronic_check	mailed_check	mailed_check	bank_transfer_(automatic)	electronic_check
+monthlycharges	29.85	56.95	53.85	42.3	70.7
+totalcharges	29.85	1889.5	108.15	1840.75	151.65
+churn	no	no	yes	no	yes
+d
 df.dtypes
-
+customerid           object
+gender               object
+seniorcitizen         int64
+partner              object
+dependents           object
+tenure                int64
+phoneservice         object
+multiplelines        object
+internetservice      object
+onlinesecurity       object
+onlinebackup         object
+deviceprotection     object
+techsupport          object
+streamingtv          object
+streamingmovies      object
+contract             object
+paperlessbilling     object
+paymentmethod        object
+monthlycharges      float64
+totalcharges         object
+churn                object
+dtype: object
 df.isnull()
+customerid	gender	seniorcitizen	partner	dependents	tenure	phoneservice	multiplelines	internetservice	onlinesecurity	onlinebackup	deviceprotection	techsupport	streamingtv	streamingmovies	contract	paperlessbilling	paymentmethod	monthlycharges	totalcharges	churn
+0	False	False	False	False	False	False	False	False	False	False	False	False	False	False	False	False	False	False	False	False	False
+1	False	False	False	False	False	False	False	False	False	False	False	False	False	False	False	False	False	False	False	False	False
+2	False	False	False	False	False	False	False	False	False	False	False	False	False	False	False	False	False	False	False	False	False
+3	False	False	False	False	False	False	False	False	False	False	False	False	False	False	False	False	False	False	False	False	False
+4	False	False	False	False	False	False	False	False	False	False	False	False	False	False	False	False	False	False	False	False	False
+...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...
+7038	False	False	False	False	False	False	False	False	False	False	False	False	False	False	False	False	False	False	False	False	False
+7039	False	False	False	False	False	False	False	False	False	False	False	False	False	False	False	False	False	False	False	False	False
+7040	False	False	False	False	False	False	False	False	False	False	False	False	False	False	False	False	False	False	False	False	False
+7041	False	False	False	False	False	False	False	False	False	False	False	False	False	False	False	False	False	False	False	False	False
+7042	False	False	False	False	False	False	False	False	False	False	False	False	False	False	False	False	False	False	False	False	False
+7043 rows × 21 columns
 
 # df.totalcharges #non numeric, must be numeric
 tc = pd.to_numeric(
     df.totalcharges, errors="coerce"  # coerce meance to ignore them
 )  # gives us a mistake at 488 line, that there is _sign
-
 df.totalcharges = pd.to_numeric(df.totalcharges, errors="coerce")
-
+0
 df.totalcharges = df.totalcharges.fillna(0)
-
+totalcharges
 df[tc.isnull()][["customerid", "totalcharges"]]
+customerid	totalcharges
+488	4472-lvygi	0.0
+753	3115-czmzd	0.0
+936	5709-lvoeq	0.0
+1082	4367-nuyao	0.0
+1340	1371-dwpaz	0.0
+3331	7644-omvmy	0.0
+3826	3213-vvolg	0.0
+4380	2520-sgtta	0.0
+5218	2923-arzlg	0.0
+6670	4075-wkniu	0.0
+6754	2775-sefee	0.0
+no not going to leave
+df.churn = (df.churn == "yes").astype(
+    int
+)  # we changed yes no to 0no not going to leave and 1yes
+3.3 Setting up the validation framework
+Perform the train/validation/test split with scikit learn
+from sklearn.model_selection import train_test_split
+train_test_split?
+# 80% train(train, validation, 20% test
+df_full_train, df_test = train_test_split(df, test_size=0.2, random_state=1)
+# train 60% and 20% validation, or val 25% from full data
+df_train, df_val = train_test_split(df_full_train, test_size=0.25, random_state=1)
+f
+len(df_train), len(df_val), len(df_test)
+(4225, 1409, 1409)
+#
+# df_train #data shuffled
+m sequential - doesnt aafect the model
+# to remove index and make them sequential - doesnt aafect the model
+df_train = df_train.reset_index(drop=True)
+df_val = df_val.reset_index(drop=True)
+df_test = df_test.reset_index(drop=True)
+df
+y_train = df_train.churn.values
+y_val = df_val.churn.values
+y_test = df_test.churn.values
+est
+del df_train['churn']
+del df_val['churn']
+del df_test['churn']
+​
+3.4 EDA
+Check missing values
+Look at the target variable(churn)
+Look at numerical and categorical variables
+# we will reset index doesnt influence on the model
+df_full_train = df_full_train.reset_index(drop=True)
+df_full_train.isnull().sum()
+customerid          0
+gender              0
+seniorcitizen       0
+partner             0
+dependents          0
+tenure              0
+phoneservice        0
+multiplelines       0
+internetservice     0
+onlinesecurity      0
+onlinebackup        0
+deviceprotection    0
+techsupport         0
+streamingtv         0
+streamingmovies     0
+contract            0
+paperlessbilling    0
+paymentmethod       0
+monthlycharges      0
+totalcharges        0
+churn               0
+dtype: int64
+urn rate
+# target variable to see destribution how many churned and not, normalize devide on the total in %. 1 - churn rate
+df_full_train.churn.value_counts(normalize=True)
+0    0.730032
+1    0.269968
+Name: churn, dtype: float64
+ms = churn rate
+#mean gives us churn rate bcs this is sum of of 0 and ones, sum of numes devided to number of items = churn rate
+df_full_train.churn.mean()
+0.26996805111821087
+global_churn_rate = df_full_train.churn.mean()
+round(global_churn_rate, 2)
+0.27
+numerical
+df_full_train.dtypes
+# we are interested in 3 numerical values: tenure, monthlycharges, totalcharges
+customerid           object
+gender               object
+seniorcitizen         int64
+partner              object
+dependents           object
+tenure                int64
+phoneservice         object
+multiplelines        object
+internetservice      object
+onlinesecurity       object
+onlinebackup         object
+deviceprotection     object
+techsupport          object
+streamingtv          object
+streamingmovies      object
+contract             object
+paperlessbilling     object
+paymentmethod        object
+monthlycharges      float64
+totalcharges        float64
+churn                 int32
+dtype: object
+numerical=['tenure', 'monthlycharges','totalcharges']
+df_full_train.columns
+df_full_train.columns
+Index(['customerid', 'gender', 'seniorcitizen', 'partner', 'dependents',
+       'tenure', 'phoneservice', 'multiplelines', 'internetservice',
+       'onlinesecurity', 'onlinebackup', 'deviceprotection', 'techsupport',
+       'streamingtv', 'streamingmovies', 'contract', 'paperlessbilling',
+       'paymentmethod', 'monthlycharges', 'totalcharges', 'churn'],
+      dtype='object')
+categorical = [
+    "gender",
+    "seniorcitizen",
+    "partner",
+    "dependents",
+    "phoneservice",
+    "multiplelines",
+    "internetservice",
+    "onlinesecurity",
+    "onlinebackup",
+    "deviceprotection",
+    "techsupport",
+    "streamingtv",
+    "streamingmovies",
+    "contract",
+    "paperlessbilling",
+    "paymentmethod",
+]
+df_full_train[categorical].nunique()
+gender              2
+seniorcitizen       2
+partner             2
+dependents          2
+phoneservice        2
+multiplelines       3
+internetservice     3
+onlinesecurity      3
+onlinebackup        3
+deviceprotection    3
+techsupport         3
+streamingtv         3
+streamingmovies     3
+contract            3
+paperlessbilling    2
+paymentmethod       4
+dtype: int64
+3.5 Feature importance: Churn rate and risk ratio
+Feauture importance analysis(part of EDA) - identifying which features affect our target variable
 
-df.churn = (df.churn == "yes").astype(int) #we changed yes no to 0no not going to leave and 1yes
+Churn rate
+Risk ratio
+Mutual information - later
+Churn rate
+df_full_train.head()
+customerid	gender	seniorcitizen	partner	dependents	tenure	phoneservice	multiplelines	internetservice	onlinesecurity	onlinebackup	deviceprotection	techsupport	streamingtv	streamingmovies	contract	paperlessbilling	paymentmethod	monthlycharges	totalcharges	churn
+0	5442-pptjy	male	0	yes	yes	12	yes	no	no	no_internet_service	no_internet_service	no_internet_service	no_internet_service	no_internet_service	no_internet_service	two_year	no	mailed_check	19.70	258.35	0
+1	6261-rcvns	female	0	no	no	42	yes	no	dsl	yes	yes	yes	yes	no	yes	one_year	no	credit_card_(automatic)	73.90	3160.55	1
+2	2176-osjuv	male	0	yes	no	71	yes	yes	dsl	yes	yes	no	yes	no	no	two_year	no	bank_transfer_(automatic)	65.15	4681.75	0
+3	6161-erdgd	male	0	yes	yes	71	yes	yes	dsl	yes	no	yes	yes	yes	yes	one_year	no	electronic_check	85.45	6300.85	0
+4	2364-ufrom	male	0	no	no	30	yes	no	dsl	yes	yes	no	yes	yes	no	one_year	no	electronic_check	70.40	2044.75	0
+churn_female = df_full_train[df_full_train.gender == "female"].churn.mean()
+churn_female
+0.27682403433476394
+[df_full_train.gender
+churn_male = df_full_train[df_full_train.gender == "male"].churn.mean()
+churn_male
+0.2632135306553911
+global_churn = df_full_train.churn.mean()
+global_churn
+0.26996805111821087
+df_full_train.partner
+df_full_train.partner.value_counts()
+no     2932
+yes    2702
+Name: partner, dtype: int64
+churn_partner = df_full_train[df_full_train.partner == "yes"].churn.mean()
+churn_partner
+0.20503330866025166
+global_churn - churn_female
+-0.006855983216553063
+ 
+global_churn - churn_male # so doesnt matter male or female
+0.006754520462819769
+global_churn - churn_partner  # makes a 69% difference
+0.06493474245795922
+no
+churn_no_partner = df_full_train[df_full_train.partner == "no"].churn.mean()
+churn_no_partner
+0.3298090040927694
+<1 less likely to churn
+#### Feature importance
+1. Difference : global churn rate, > and churn rate within the group =if the difference is higher >0, the group is less likely a churn.
+- global churn rate, < and churn rate within the group <0, group is higher then the churn rate = more likely to churn
+​
+2. Risk ratio 
+risk = group/global, if >more than 1 = more likely to churn
+<1 less likely to churn
+​
+Risk ratio
+ #high risk 1.22
+churn_no_partner / global_churn #high risk 1.22
+1.2216593879412643
+# less likely to churn
+churn_partner / global_churn# less likely to churn
+0.7594724924338315
+SELECT:
+- gender
+AVG(churn),
+AVG(churn) - global_churn AS diff,
+AVG(churn)/global_churn AS risk
+​
+FROM 
+   data
+GROUP BY
+   gender;
+Python.display import display
+from IPython.display import display
+for c in categorical:
+    print(c)
+    # df_full_train.groupby("gender").churn.mean() # we need to add  to a table mean and count
+    df_group = df_full_train.groupby(c).churn.agg(["mean", "count"])
+    df_group["diff"] = df_group["mean"] - global_churn
+    df_group["risk"] = df_group["mean"] / global_churn
+    display(df_group)
+    print()
+    print()
+gender
+mean	count	diff	risk
+gender				
+female	0.276824	2796	0.006856	1.025396
+male	0.263214	2838	-0.006755	0.974980
 
-### 3.3 Setting up the validation framework
-* Perform the train/validation/test split with scikit learn
+
+seniorcitizen
+mean	count	diff	risk
+seniorcitizen				
+0	0.242270	4722	-0.027698	0.897403
+1	0.413377	912	0.143409	1.531208
+
+
+partner
+mean	count	diff	risk
+partner				
+no	0.329809	2932	0.059841	1.221659
+yes	0.205033	2702	-0.064935	0.759472
+
+
+dependents
+mean	count	diff	risk
+dependents				
+no	0.313760	3968	0.043792	1.162212
+yes	0.165666	1666	-0.104302	0.613651
+
+
+phoneservice
+mean	count	diff	risk
+phoneservice				
+no	0.241316	547	-0.028652	0.893870
+yes	0.273049	5087	0.003081	1.011412
+
+
+multiplelines
+mean	count	diff	risk
+multiplelines				
+no	0.257407	2700	-0.012561	0.953474
+no_phone_service	0.241316	547	-0.028652	0.893870
+yes	0.290742	2387	0.020773	1.076948
+
+
+internetservice
+mean	count	diff	risk
+internetservice				
+dsl	0.192347	1934	-0.077621	0.712482
+fiber_optic	0.425171	2479	0.155203	1.574895
+no	0.077805	1221	-0.192163	0.288201
+
+
+onlinesecurity
+mean	count	diff	risk
+onlinesecurity				
+no	0.420921	2801	0.150953	1.559152
+no_internet_service	0.077805	1221	-0.192163	0.288201
+yes	0.153226	1612	-0.116742	0.567570
+
+
+onlinebackup
+mean	count	diff	risk
+onlinebackup				
+no	0.404323	2498	0.134355	1.497672
+no_internet_service	0.077805	1221	-0.192163	0.288201
+yes	0.217232	1915	-0.052736	0.804660
+
+
+deviceprotection
+mean	count	diff	risk
+deviceprotection				
+no	0.395875	2473	0.125907	1.466379
+no_internet_service	0.077805	1221	-0.192163	0.288201
+yes	0.230412	1940	-0.039556	0.853480
+
+
+techsupport
+mean	count	diff	risk
+techsupport				
+no	0.418914	2781	0.148946	1.551717
+no_internet_service	0.077805	1221	-0.192163	0.288201
+yes	0.159926	1632	-0.110042	0.592390
+
+
+streamingtv
+mean	count	diff	risk
+streamingtv				
+no	0.342832	2246	0.072864	1.269897
+no_internet_service	0.077805	1221	-0.192163	0.288201
+yes	0.302723	2167	0.032755	1.121328
+
+
+streamingmovies
+mean	count	diff	risk
+streamingmovies				
+no	0.338906	2213	0.068938	1.255358
+no_internet_service	0.077805	1221	-0.192163	0.288201
+yes	0.307273	2200	0.037305	1.138182
+
+
+contract
+mean	count	diff	risk
+contract				
+month-to-month	0.431701	3104	0.161733	1.599082
+one_year	0.120573	1186	-0.149395	0.446621
+two_year	0.028274	1344	-0.241694	0.104730
+
+
+paperlessbilling
+mean	count	diff	risk
+paperlessbilling				
+no	0.172071	2313	-0.097897	0.637375
+yes	0.338151	3321	0.068183	1.252560
+
+
+paymentmethod
+mean	count	diff	risk
+paymentmethod				
+bank_transfer_(automatic)	0.168171	1219	-0.101797	0.622928
+credit_card_(automatic)	0.164339	1217	-0.105630	0.608733
+electronic_check	0.455890	1893	0.185922	1.688682
+mailed_check	0.193870	1305	-0.076098	0.718121
+
+
+3.6 Feature importance:Mutual information
+check multicollinearity and correlation
+
+Mutual information - concept from information theory, it tells us how much we can learn about one variable if we know the value of another
+
+from sklearn.metrics import mutual_info_score
+# important result
+mutual_info_score(df_full_train.churn, df_full_train.contract)# important result
+0.0983203874041556
+mutual_info_score(df_full_train.gender, df_full_train.churn)
+mutual_info_score(df_full_train.gender, df_full_train.churn) #not important
+0.0001174846211139946
+mutual_info_score(df_full_train.partner, df_full_train.churn)
+0.009967689095399745
+def mutual_info_churn_score(series):
+    return mutual_info_score(series, df_full_train.churn)
+#up to 0.04 important
+mi = df_full_train[categorical].apply(mutual_info_churn_score)
+mi.sort_values(ascending=False)
+#up to 0.04 important
+contract            0.098320
+onlinesecurity      0.063085
+techsupport         0.061032
+internetservice     0.055868
+onlinebackup        0.046923
+deviceprotection    0.043453
+paymentmethod       0.043210
+streamingtv         0.031853
+streamingmovies     0.031581
+paperlessbilling    0.017589
+dependents          0.012346
+partner             0.009968
+seniorcitizen       0.009410
+multiplelines       0.000857
+phoneservice        0.000229
+gender              0.000117
+dtype: float64
+3.7 Frature importance: Correlation
+How about numerical columns?
+
+correlation coefficient
